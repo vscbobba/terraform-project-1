@@ -1,5 +1,5 @@
 resource "aws_vpc" "project1_vpc" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = lookup(var.vpc_cidr,terraform.workspace)
   enable_dns_hostnames = true
   enable_dns_support   = true
   tags = {
@@ -17,7 +17,7 @@ resource "aws_internet_gateway" "Project1_IGW" {
 
 resource "aws_subnet" "project1_public" {
   vpc_id                  = aws_vpc.project1_vpc.id
-  cidr_block              = "10.0.1.0/24"
+  cidr_block              = lookup(var.subnet_public_cidr,terraform.workspace)
   map_public_ip_on_launch = true
   tags = {
     Name        = "Public-subnet"
@@ -27,7 +27,7 @@ resource "aws_subnet" "project1_public" {
 
 resource "aws_subnet" "project1_private" {
   vpc_id     = aws_vpc.project1_vpc.id
-  cidr_block = "10.0.2.0/24"
+  cidr_block = lookup(var.subnet_private_cidr,terraform.workspace)
   tags = {
     Name        = "Private-subnet"
     description = "no internet"
@@ -80,7 +80,7 @@ resource "aws_security_group" "allow_tls" {
 
 resource "aws_instance" "example_ec2" {
        ami = var.ami[0]
-       instance_type = var.instance_type[0]
+       instance_type = terraform.workspace == "dev" ? var.instance_type[0] : var.instance_type[1]
        key_name = "mykeyz"
        subnet_id = aws_subnet.project1_public.id
        vpc_security_group_ids = [aws_security_group.allow_tls.id]
